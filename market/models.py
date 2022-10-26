@@ -11,4 +11,11 @@ class Profile(models.Model):
     birthday = models.DateField()
     phonenumber = models.IntegerField()
     
+class Post(models.Model):
+    title = models.CharField(max_length=10)
+    context = models.TextField(max_length=1000)
+    price = models.IntegerField()
+    post_pic = models.ImageField(null=True)
+    dt_created = models.DateField(auto_now_add=True)
+    dt_update = models.DateField(auto_now=True)
     
