@@ -7,5 +7,4 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fileds = (
             "email",
-            "password",
         )
