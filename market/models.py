@@ -1,15 +1,47 @@
 from django.db import models
+from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 
 # Create your models here.
-class User(models.Model):
+class UserManager(BaseUserManager):
+    def create_user(self, email, password, nickname, **kwargs):
+        if not email:
+            raise ValueError("이메일을 입력해 주세요")
+        
+        user = self.model(
+            email = email,
+            nickname = nickname,
+        )
+        
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+    
+    def create_superuser(self, email=None, password=None, nickname=None, **extra_fields):
+        superuser = self.create_user(
+            email = email,
+            password = password,
+            nickname = nickname,
+        )
+        superuser.is_staff = True
+        superuser.is_superuser = True
+        superuser.is_active = True
+        
+        superuser.save(using=self._db)
+        return superuser
+    
+class User(AbstractBaseUser):
     email = models.EmailField(unique=True)
+    nickname = models.CharField(max_length=20, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    objects = UserManager()
+    
+    USERNAME_FIELD = 'email'
+    
     
 class Profile(models.Model):
-    nickname = models.CharField(max_length=20, unique=True)
     prfile_pic = models.ImageField()
-    name = models.CharField(max_length=10)
-    birthday = models.DateField()
-    phonenumber = models.IntegerField()
     
 class Post(models.Model):
     title = models.CharField(max_length=10)
