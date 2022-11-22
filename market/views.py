@@ -42,7 +42,7 @@ class RegisterAPIView(APIView):
 class Authview(APIView):
     def post(self, request):
         user = authenticate(
-            nickname=request.data.get("nickname"),
+            email=request.data.get("email"),
             password=request.data.get("password"),
         )
         if user is not None:
