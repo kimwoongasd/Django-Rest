@@ -54,3 +54,4 @@ class Post(models.Model):
     dt_created = models.DateField(auto_now_add=True)
     dt_update = models.DateField(auto_now=True)
     
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")

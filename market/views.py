@@ -64,17 +64,17 @@ class Authview(APIView):
         except(jwt.exceptions.ExpiredSignatureError):
             # 토큰 만료 시 토큰 갱신
             data = {'refresh': request.COOKIES.get('refresh', None)}
-            serializer = TokenRefreshSerializer(data=data)
+            serializer = TokenRefreshSerializer(data=data)  # type: ignore
             if serializer.is_valid(raise_exception=True):
                 access = serializer.data.get('access', None)
                 refresh = serializer.data.get('refresh', None)
-                payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+                payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])  # type: ignore
                 pk = payload.get('user_id')
                 user = get_object_or_404(User, pk=pk)
                 serializer = UserSerializer(instance=user)
                 res = Response(serializer.data, status=status.HTTP_200_OK)
-                res.set_cookie('access', access)
-                res.set_cookie('refresh', refresh)
+                res.set_cookie('access', access)  # type: ignore
+                res.set_cookie('refresh', refresh)  # type: ignore
                 print(refresh)
                 return res
             raise jwt.exceptions.InvalidTokenError

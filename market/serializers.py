@@ -9,7 +9,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
     def create(self, validated_data):
-        user = User.objects.create_user(
+        user = User.objects.create_user(  # type: ignore
             nickname = validated_data['nickname'],
             email = validated_data['email'],
             password = validated_data['password']
