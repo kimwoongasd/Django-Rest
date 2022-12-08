@@ -1,7 +1,10 @@
-import jwt
-from django.shortcuts import render, get_object_or_404
+import jwt, os, requests
+from json import JSONDecodeError
+from allauth.socialaccount.models import SocialAccount
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate
-from django.http import Http404
+from django.http import Http404, JsonResponse
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, viewsets
@@ -9,8 +12,8 @@ from rest_framework.decorators import api_view, APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from .serializers import RegisterSerializer, UserSerializer, PostSerializer
 from blog.settings import SECRET_KEY
-from .models import User, Post
-
+from blog.password import *
+from .models import *
 
 # Create your views here.
 @api_view(['GET'])
@@ -169,3 +172,83 @@ class PostDetail(APIView):
         post = self.get_object(pk)
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+# 구글 소셜로그인 변수 설정
+state = STATE
+BASE_URL = 'http://127.0.0.1:8000/'
+GOOGLE_CALLBACK_URI = BASE_URL + 'market/google/callback/'
+
+def google_login(request):
+    scope = "https://www.googleapis.com/auth/userinfo.email"
+    client_id = GOOGLE_ID
+    return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}")
+    
+def google_callback(request):
+    client_id = GOOGLE_ID
+    client_secret = GOOGLE_PW
+    code = request.GET.get('code')
+
+    token_req = requests.post(f"https://oauth2.googleapis.com/token?client_id={client_id}&client_secret={client_secret}&code={code}&grant_type=authorization_code&redirect_uri={GOOGLE_CALLBACK_URI}&state={state}")
+    
+    token_req_json = token_req.json()
+    error = token_req_json.get("error")
+    
+    if error is not None:
+        raise JSONDecodeError(error)  # type: ignore
+    
+    access_token = token_req_json.get("access_token")
+    
+    email_req = requests.get(f"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}")
+    email_req_status = email_req.status_code
+    
+    if email_req_status != 200:
+        return JsonResponse({'err_msg': 'failed to get email'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    email_req_json = email_req.json()
+    email = email_req_json.get("email")
+    
+    try:
+        user = User.objects.get(email=email)
+        
+        socail_user = SocialAccount.objects.get(user=user)
+        
+        if socail_user.provider != "google":
+            return JsonResponse({'err_msg': 'no matching social type'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        data = {'access_token': access_token, 'code': code}
+        accept = requests.post(f"{BASE_URL}market/google/login/finish/", data=data)
+        accept_status = accept.status_code
+        
+        if accept_status != 200:
+            return JsonResponse({'err_msg': 'failed to signin'}, status=accept_status)
+
+        accept_json = accept.json()
+        accept_json.pop("user", None)
+        return JsonResponse(accept_json)
+    
+    except User.DoesNotExist:
+        data = {'access_token': access_token, 'code': code}
+        accept = requests.post(f"{BASE_URL}market/google/login/finish/", data=data)
+        accept_status = accept.status_code
+        
+        if accept_status != 200:
+            return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
+
+        accept_json = accept.json()
+        accept_json.pop('user', None)
+        return JsonResponse(accept_json)
+    
+    except SocialAccount.DoesNotExist:  # type: ignore
+        return JsonResponse({'err_msg': 'email exists but not social user'}, status=status.HTTP_400_BAD_REQUEST)
+    
+from dj_rest_auth.registration.views import SocialLoginView
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from allauth.socialaccount.providers.google import views as google_view
+
+class GoogleLogin(SocialLoginView):
+    adapter_class = google_view.GoogleOAuth2Adapter
+    callback_url = GOOGLE_CALLBACK_URI
+    client_class = OAuth2Client  
+    
+    

@@ -3,7 +3,7 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, Permis
 
 # Create your models here.
 class UserManager(BaseUserManager):
-    def create_user(self, email, password, nickname, **kwargs):
+    def create_user(self, email, password, nickname=None, **kwargs):
         if not email:
             raise ValueError("이메일을 입력해 주세요")
         
@@ -41,7 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
     
     USERNAME_FIELD = 'email'
-    
+    REQUIRED_FIELDS = []
     
 class Profile(models.Model):
     prfile_pic = models.ImageField()
