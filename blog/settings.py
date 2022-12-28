@@ -169,6 +169,8 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
+SOCIAL_AUTH_GOOGLE_OAUTH2_USER_FIELDS = ['email']
+
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 

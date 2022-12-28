@@ -3,7 +3,7 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, Permis
 
 # Create your models here.
 class UserManager(BaseUserManager):
-    def create_user(self, email, password, nickname=None, **kwargs):
+    def create_user(self, email, password, nickname, **kwargs):
         if not email:
             raise ValueError("이메일을 입력해 주세요")
         
@@ -31,7 +31,7 @@ class UserManager(BaseUserManager):
     
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    nickname = models.CharField(max_length=20, unique=True)
+    nickname = models.CharField(max_length=20)
     is_superuser = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
