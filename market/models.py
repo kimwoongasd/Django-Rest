@@ -44,7 +44,27 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
     
 class Profile(models.Model):
-    prfile_pic = models.ImageField()
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    auth = models.CharField(max_length=128, null=True, blank=True)
+    realname = models.CharField(max_length=64, null=True, blank=True)
+    nickname = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    prfile_pic = models.ImageField(null=True, blank=True)
+    provider = models.CharField(max_length=64, default='basic')
+    
+    def __str__(self):
+        return self.user.nickname
+    
+    def create_profile(self, user, data):
+        last_name = data.get("last_name", '')
+        first_name = data.get("first_name", '')
+        profile = Profile(
+            user=user,
+            realname = last_name + first_name,
+        )
+        
+        profile.save()
+        
+        return 
     
 class Post(models.Model):
     title = models.CharField(max_length=10)
@@ -55,3 +75,4 @@ class Post(models.Model):
     dt_update = models.DateField(auto_now=True)
     
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
+    
