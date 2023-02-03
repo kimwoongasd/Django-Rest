@@ -1,35 +1,54 @@
-from django.db import models
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
-
+from django.db import models, transaction
+from django.contrib.auth.models import AbstractUser, PermissionsMixin
+from django.contrib.auth.base_user import BaseUserManager
 # Create your models here.
 class UserManager(BaseUserManager):
-    def create_user(self, email, password, nickname, **kwargs):
+    @transaction.atomic
+    def create_user(self, validate_data):
+        nickname = validate_data["nickname"]
+        email = validate_data["email"]
+        password = validate_data["password"]
+        first_name = validate_data['first_name']
+        last_name = validate_data['last_name']
+        
+        if not nickname:
+            raise ValueError('아이디는 필수 항목입니다.')
         if not email:
-            raise ValueError("이메일을 입력해 주세요")
+            raise ValueError('이메일은 필수 항목입니다.')
+        if not password:
+            raise ValueError('패드워드는 필수 항목입니다.')
+        
         
         user = self.model(
-            email = email,
-            nickname = nickname,
+            nickname=nickname,
+            first_name=first_name,
+            last_name=last_name,
+            email = self.normalize_email(email)
         )
-        
         user.set_password(password)
         user.save(using=self._db)
+        profile = Profile.create_profile(self, user=user, data=validate_data)  # type: ignore
+        profile.save()
+        
         return user
     
     def create_superuser(self, email=None, password=None, nickname="슈퍼", **extra_fields):
-        superuser = self.create_user(
-            email = email,
+        superuser = self.model(
+            email = self.normalize_email(email),
             password = password,
             nickname = nickname,
         )
+        superuser.set_password(password)
         superuser.is_staff = True
         superuser.is_superuser = True
         superuser.is_active = True
         
         superuser.save(using=self._db)
+        profile = Profile.create_profile(self, user=superuser, data={})  # type: ignore
+        profile.save()
         return superuser
     
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     nickname = models.CharField(max_length=20)
     is_superuser = models.BooleanField(default=False)
@@ -38,33 +57,38 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    objects = UserManager()
+    object = UserManager()
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
     
+    @property
+    def name(self):
+        if not self.last_name:
+            return self.first_name
+
+        return f'{self.first_name} {self.last_name}'
+    
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    auth = models.CharField(max_length=128, null=True, blank=True)
-    realname = models.CharField(max_length=64, null=True, blank=True)
-    nickname = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    realname = models.CharField(max_length=128, null=True, blank=True)
+    username = models.CharField(max_length=128, null=True, blank=True)
     prfile_pic = models.ImageField(null=True, blank=True)
-    provider = models.CharField(max_length=64, default='basic')
+    provier = models.CharField(max_length=128, null=True, blank=True)
     
     def __str__(self):
         return self.user.nickname
     
     def create_profile(self, user, data):
-        last_name = data.get("last_name", '')
-        first_name = data.get("first_name", '')
+        first_name = data.get("first_name", "")
+        last_name = data.get("last_name", "")
+        
         profile = Profile(
             user=user,
-            realname = last_name + first_name,
+            realname = first_name + last_name,
         )
-        
         profile.save()
-        
-        return 
+        return profile
     
 class Post(models.Model):
     title = models.CharField(max_length=10)
