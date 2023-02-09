@@ -1,17 +1,30 @@
 from django.db import models, transaction
-from django.contrib.auth.models import AbstractUser, PermissionsMixin
+from django.core import validators
+from django.utils.deconstruct import deconstructible
+from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
+from django.conf import settings
 # Create your models here.
+@deconstructible
+class UnicodeUsernameValidator(validators.RegexValidator):
+    regex = r'^[\w.@+-]+\Z'
+    message = _(
+        'Enter a valid username. This value may contain only letters, '
+        'numbers, and @/./+/-/_ characters.'
+    )
+    flags = 0
+
 class UserManager(BaseUserManager):
     @transaction.atomic
     def create_user(self, validate_data):
-        nickname = validate_data["nickname"]
+        username = validate_data["username"]
         email = validate_data["email"]
-        password = validate_data["password"]
+        password = validate_data["password1"]
         first_name = validate_data['first_name']
         last_name = validate_data['last_name']
         
-        if not nickname:
+        if not username:
             raise ValueError('아이디는 필수 항목입니다.')
         if not email:
             raise ValueError('이메일은 필수 항목입니다.')
@@ -20,7 +33,7 @@ class UserManager(BaseUserManager):
         
         
         user = self.model(
-            nickname=nickname,
+            username=username,
             first_name=first_name,
             last_name=last_name,
             email = self.normalize_email(email)
@@ -32,11 +45,11 @@ class UserManager(BaseUserManager):
         
         return user
     
-    def create_superuser(self, email=None, password=None, nickname="슈퍼", **extra_fields):
+    def create_superuser(self, username=None, email=None, password=None, **extra_fields):
         superuser = self.model(
+            username=username,
             email = self.normalize_email(email),
             password = password,
-            nickname = nickname,
         )
         superuser.set_password(password)
         superuser.is_staff = True
@@ -48,44 +61,59 @@ class UserManager(BaseUserManager):
         profile.save()
         return superuser
     
-class User(AbstractUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin):
+    username_validator = UnicodeUsernameValidator()
+
+    username = models.CharField(
+        _("username"),
+        max_length=150,
+        unique=True,
+        help_text=_(
+            "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+        ),
+        validators=[username_validator],
+        error_messages={
+            "unique": _("A user with that username already exists."),
+        },
+    )
+    first_name = models.CharField(_("first name"), max_length=150, blank=True)
+    last_name = models.CharField(_("last name"), max_length=150, blank=True)
     email = models.EmailField(unique=True)
-    nickname = models.CharField(max_length=20)
     is_superuser = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    object = UserManager()
+    objects = UserManager()
     
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
     
-    @property
-    def name(self):
-        if not self.last_name:
-            return self.first_name
-
-        return f'{self.first_name} {self.last_name}'
     
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
+    nickname = models.CharField(max_length=20, null=True, blank=True)
     realname = models.CharField(max_length=128, null=True, blank=True)
-    username = models.CharField(max_length=128, null=True, blank=True)
     prfile_pic = models.ImageField(null=True, blank=True)
     provier = models.CharField(max_length=128, null=True, blank=True)
     
     def __str__(self):
-        return self.user.nickname
+        return self.user.username
     
     def create_profile(self, user, data):
         first_name = data.get("first_name", "")
         last_name = data.get("last_name", "")
+        name = data.get("name", "")
+        realname = ""
+        if name:
+            realname = name
+        else:
+            realname = first_name + last_name
         
         profile = Profile(
             user=user,
-            realname = first_name + last_name,
+            realname = realname,
         )
         profile.save()
         return profile

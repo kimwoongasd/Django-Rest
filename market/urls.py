@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework import routers
 from .views import *
+from auth.googleapi import *
 
 router = routers.DefaultRouter()
 router.register('list', UserViewSet) # 유저리스트 (테스트용)
@@ -16,9 +17,9 @@ urlpatterns = [
     path("post/<int:pk>/", PostDetail.as_view()),
     
     # 구글 소셜로그인
-    path('google/login/', google_login, name='google_login'),
-    path('google/callback/', google_callback, name='google_callback'),
-    path('google/login/finish/', GoogleLogin.as_view(), name='google_login_todjango'),
+    path('google/login/', GoogleloginApi.as_view(), name='google_login'),
+    path('google/callback/', GoogleSinginCallbackApi.as_view(), name='google_callback'),
+    # path('google/login/finish/', GoogleLogin.as_view(), name='google_login_todjango'),
     
     # 카카오 소셜로그인
     path('kakao/login/', kakao_login, name='kakao_login'),
