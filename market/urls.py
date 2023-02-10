@@ -3,6 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework import routers
 from .views import *
 from auth.googleapi import *
+from auth.kakaoapi import *
 
 router = routers.DefaultRouter()
 router.register('list', UserViewSet) # 유저리스트 (테스트용)
@@ -22,9 +23,9 @@ urlpatterns = [
     # path('google/login/finish/', GoogleLogin.as_view(), name='google_login_todjango'),
     
     # 카카오 소셜로그인
-    path('kakao/login/', kakao_login, name='kakao_login'),
-    path('kakao/callback/', kakao_callback, name='kakao_callback'),
-    path('kakao/login/finish/', KakaoLogin.as_view(), name='kakao_login_todjango'),
+    path('kakao/login/', KakaologinApi.as_view(), name='kakao_login'),
+    path('kakao/callback/', KakaaoSigninCallBackApi.as_view(), name='kakao_callback'),
+    # path('kakao/login/finish/', KakaoLogin.as_view(), name='kakao_login_todjango'),
     
     # 네이버 소셜로그인
     path('naver/login', naver_login, name='naver_login'),
