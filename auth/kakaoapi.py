@@ -42,18 +42,17 @@ class KakaaoSigninCallBackApi(APIView):
                 },
             )
         user_info= profile_request.json()
-        
+        # print(user_info)
         profile_data = {
             'username': user_info['kakao_account'].get('email'),
-            'image': user_info['kakao_account'].get('profile_image', ''),
-            'name': user_info['kakao_account'].get('profile_nickname', ''),
-            'nickname': user_info['kakao_account'].get('profile_nickname', ''),
+            'image': user_info["properties"].get('profile_image', ''),
+            'name': user_info['properties'].get('nickname', ''),
+            'nickname': user_info['properties'].get('nickname', ''),
             'path': "kakao",
             
         }
-        print(profile_data)
+        # print(profile_data)
         user, _ = social_user_get_or_create(**profile_data)
         respone = jwt_login(user=user)
-        print()
-        print(respone)
+        
         return respone
