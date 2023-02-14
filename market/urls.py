@@ -4,6 +4,7 @@ from rest_framework import routers
 from .views import *
 from auth.googleapi import *
 from auth.kakaoapi import *
+from auth.naverapi import *
 
 router = routers.DefaultRouter()
 router.register('list', UserViewSet) # 유저리스트 (테스트용)
@@ -28,7 +29,7 @@ urlpatterns = [
     # path('kakao/login/finish/', KakaoLogin.as_view(), name='kakao_login_todjango'),
     
     # 네이버 소셜로그인
-    path('naver/login', naver_login, name='naver_login'),
-    path('naver/callback/', naver_callback, name='naver_callback'),
-    path('naver/login/finish/', NaverLogin.as_view(), name='naver_login_todjango'),
+    path('naver/login', NaverLoginApi.as_view(), name='naver_login'),
+    path('naver/callback/', NaverSigninCallBackApi.as_view(), name='naver_callback'),
+    # path('naver/login/finish/', NaverLogin.as_view(), name='naver_login_todjango'),
 ]
