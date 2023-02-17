@@ -15,12 +15,13 @@ class UnicodeUsernameValidator(validators.RegexValidator):
     )
     flags = 0
 
+
 class UserManager(BaseUserManager):
     @transaction.atomic
     def create_user(self, validate_data):
         username = validate_data["username"]
         email = validate_data["email"]
-        password = validate_data["password1"]
+        password = validate_data["password"]
         first_name = validate_data['first_name']
         last_name = validate_data['last_name']
         
@@ -126,5 +127,16 @@ class Post(models.Model):
     dt_created = models.DateField(auto_now_add=True)
     dt_update = models.DateField(auto_now=True)
     
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="post")
+
+
+class Comment(models.Model):
+    content = models.TextField(max_length=500, blank=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
+    
+    def __str__(self):
+        return self.content[:10]
