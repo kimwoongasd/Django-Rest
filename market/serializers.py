@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import User, Post, Profile
+from .models import User, Post, Profile, Comment
 
 
 User = get_user_model()
@@ -10,9 +10,9 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = [
             'realname',
-            'username',
+            'nickname',
             'prfile_pic',
-            'provie',
+            'provier',
         ]
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,16 +20,16 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'nickname',
+            'username',
             'email',
             'profile',
         ]
 
 class RegisterSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150, write_only=True)
     first_name = serializers.CharField(max_length=150, write_only=True)
     last_name = serializers.CharField(max_length=150, write_only=True)
     email = serializers.EmailField(write_only=True)
-    nickname = serializers.CharField(max_length=150, write_only=True)
     password = serializers.CharField(write_only=True)
         
     def create(self, validated_data):
@@ -39,8 +39,14 @@ class RegisterSerializer(serializers.Serializer):
         
         return user
 
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = '__all__'
+        
+        
 class PostSerializer(serializers.ModelSerializer):
+    comments = CommentSerializer(many=True, read_only=True)
     class Meta:
         model = Post
         fields = '__all__'
-
