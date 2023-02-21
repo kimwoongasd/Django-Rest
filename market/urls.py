@@ -18,6 +18,7 @@ urlpatterns = [
     path("post/", PostList.as_view()),
     path("post/<int:pk>/", PostDetail.as_view()),
     path("post/<int:pk>/comments/<int:comment_pk>/", CommentManageApi.as_view(), name='comment-detail'),
+    path("post/<int:pk>/comments/<int:comment_pk>/reply/<int:reply_pk>/", ReplyManageApi.as_view(), name='reply-detail'),
     
     # 구글 소셜로그인
     path('google/login/', GoogleloginApi.as_view(), name='google_login'),

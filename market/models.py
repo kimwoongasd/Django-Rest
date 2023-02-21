@@ -140,3 +140,10 @@ class Comment(models.Model):
     
     def __str__(self):
         return self.content[:10]
+    
+class Reply(models.Model):
+    content = models.TextField(max_length=500, blank=False)
+    
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='replies')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)

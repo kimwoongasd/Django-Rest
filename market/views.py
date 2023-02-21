@@ -54,7 +54,7 @@ class Authview(APIView):
     # 유저 정보 확인
     def get(self, request):
         try:
-            # print(request.COOKIES)
+            print(request.COOKIES)
             # access token을 decode 해서 유저 id 추출 => 유저 식별
             access = request.COOKIES['access']
             refresh = request.COOKIES['refresh']
@@ -95,7 +95,7 @@ class Authview(APIView):
     def post(self, request):
     	# 유저 인증
         user = authenticate(
-            email = request.data.get("email"), password=request.data.get("password")
+            username = request.data.get("username"), password=request.data.get("password")
         )
         # 이미 회원가입 된 유저일 때
         if user is not None:
@@ -197,10 +197,21 @@ class CommentManageApi(APIView):
             return Comment.objects.filter(post=pk).get(pk=comment_pk)
         except Post.DoesNotExist:
             raise Http404
+        
     def get(self, request, pk, comment_pk, form=None):
         comment = self.get_object(pk, comment_pk)
         serializer = CommentSerializer(comment)
         return Response(serializer.data)
+    
+    def post(self, request, pk, comment_pk, format=None):
+        comment = self.get_object(pk, comment_pk)
+        data = request.data.copy()
+        data['comment'] = comment.id  # type: ignore 
+        serializer = ReplySerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
     def put(self, request, pk, comment_pk, *args, **kwargs):
         comment = self.get_object(pk, comment_pk)
@@ -213,4 +224,29 @@ class CommentManageApi(APIView):
     def delete(self, request, pk, comment_pk, *args, **kwargs):
         comment = self.get_object(pk, comment_pk)
         comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class ReplyManageApi(APIView):
+    def get_object(self, pk, comment_pk, reply_pk):
+        try:
+            return Reply.objects.filter(comment__post=pk, comment_id=comment_pk).get(pk=reply_pk)
+        except Post.DoesNotExist:
+            raise Http404
+        
+    def get(self, request, pk, comment_pk, reply_pk, *args, **kwargs):
+        reply = self.get_object(pk, comment_pk, reply_pk)
+        serializer = ReplySerializer(reply)
+        return Response(serializer.data)
+    
+    def put(self, request, pk, comment_pk, reply_pk, *args, **kwargs):
+        reply = self.get_object(pk, comment_pk, reply_pk)
+        serializer = ReplySerializer(reply, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk, comment_pk, reply_pk, *args, **kwargs):
+        reply = self.get_object(pk, comment_pk, reply_pk)
+        reply.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
