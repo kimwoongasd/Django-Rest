@@ -17,6 +17,7 @@ urlpatterns = [
     path("auth/refresh/", TokenRefreshView.as_view()), #토큰 재발급하기
     path("post/", PostList.as_view()),
     path("post/<int:pk>/", PostDetail.as_view()),
+    path("post/<int:pk>/comments/<int:comment_pk>/", CommentManageApi.as_view(), name='comment-detail'),
     
     # 구글 소셜로그인
     path('google/login/', GoogleloginApi.as_view(), name='google_login'),

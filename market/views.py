@@ -191,11 +191,26 @@ class PostDetail(APIView):
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+class CommentManageApi(APIView):
+    def get_object(self, pk, comment_pk):
+        try:
+            return Comment.objects.filter(post=pk).get(pk=comment_pk)
+        except Post.DoesNotExist:
+            raise Http404
+    def get(self, request, pk, comment_pk, form=None):
+        comment = self.get_object(pk, comment_pk)
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data)
+        
+    def put(self, request, pk, comment_pk, *args, **kwargs):
+        comment = self.get_object(pk, comment_pk)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    def delete(self, request, pk, comment_pk, *args, **kwargs):
+        comment = self.get_object(pk, comment_pk)
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
