@@ -106,29 +106,44 @@ class Profile(models.Model):
         first_name = data.get("first_name", "")
         last_name = data.get("last_name", "")
         name = data.get("name", "")
+        nickname = data.get("nickname", "")
+        
         realname = ""
         if name:
             realname = name
         else:
             realname = first_name + last_name
+            
+        if not nickname:
+            nickname = realname
         
         profile = Profile(
             user=user,
             realname = realname,
+            nickname = nickname
         )
         profile.save()
         return profile
+    
+class Category(models.Model):
+    title = models.CharField(max_length=128, unique=True, null=True, blank=False)
+    
+    def __str__(self):
+        return self.title
     
 class Post(models.Model):
     title = models.CharField(max_length=10)
     context = models.TextField(max_length=1000)
     price = models.IntegerField()
-    post_pic = models.ImageField(null=True)
+    post_pic = models.ImageField(null=True, blank=True)
     dt_created = models.DateField(auto_now_add=True)
     dt_update = models.DateField(auto_now=True)
     
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="post")
+    category = models.ForeignKey(Category, null=True, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.title[:10]
 
 class Comment(models.Model):
     content = models.TextField(max_length=500, blank=False)
@@ -147,3 +162,4 @@ class Reply(models.Model):
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='replies')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    

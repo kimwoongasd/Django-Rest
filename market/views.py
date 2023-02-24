@@ -13,6 +13,7 @@ from .serializers import *
 from blog.settings import SECRET_KEY
 from blog.password import *
 from .models import *
+from django.db.models import Q
 
 # Create your views here.
 @api_view(['GET'])
@@ -250,3 +251,18 @@ class ReplyManageApi(APIView):
         reply = self.get_object(pk, comment_pk, reply_pk)
         reply.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+User = get_user_model()
+class UpdateProfileApi(APIView):
+    def get(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+        serializer = ProfileSerializer(user.profile) # type: ignore
+        return Response(serializer.data)
+    
+    def put(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+        serializer = ProfileSerializer(user.profile, data=request.data) # type: ignore
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
