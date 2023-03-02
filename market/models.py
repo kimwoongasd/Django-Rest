@@ -158,8 +158,19 @@ class Comment(models.Model):
     
 class Reply(models.Model):
     content = models.TextField(max_length=500, blank=False)
-    
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='replies')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+class Cart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Post, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+    cancle = models.BooleanField(default=False)
+
+
+# class Order(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     product = models.ForeignKey(Post, on_delete=models.CASCADE)
+#     quantity = models.IntegerField(default=1)
+#     order_date = models.DateTimeField(auto_now=True)

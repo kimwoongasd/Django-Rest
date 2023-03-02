@@ -1,10 +1,10 @@
 import jwt
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
 from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, APIView
@@ -13,7 +13,6 @@ from .serializers import *
 from blog.settings import SECRET_KEY
 from blog.password import *
 from .models import *
-from django.db.models import Q
 
 # Create your views here.
 @api_view(['GET'])
@@ -140,9 +139,12 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-class PostList(APIView):
-    pagination_class = PageNumberPagination
+class PostPagination(PageNumberPagination):
     page_size = 10
+
+class PostList(APIView):
+    pagination_class = PostPagination
+    
     # post list 보여줄 때
     def get(self, request):
         posts = Post.objects.all()
@@ -151,13 +153,15 @@ class PostList(APIView):
         serializer = PostSerializer(result_page, many=True)
         return Response(serializer.data)
     
+    
+class PostCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(author = request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class PostDetail(APIView):
     def get_object(self, pk):
@@ -251,7 +255,7 @@ class ReplyManageApi(APIView):
         reply = self.get_object(pk, comment_pk, reply_pk)
         reply.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
 User = get_user_model()
 class UpdateProfileApi(APIView):
     def get(self, request, user_id):
@@ -266,3 +270,63 @@ class UpdateProfileApi(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class CartManageAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        user_id = request.user.id
+        cart_items = Cart.objects.filter(user=user_id)
+        serializer = CartSerializer(cart_items, many=True)
+        cart_data = serializer.data
+        items = []
+        for item in cart_data:
+            product_id = item['product']
+            product = Post.objects.get(id=product_id)
+            items.append({
+                    "post_id": product_id,
+                    "name" : product.title,
+                    "price" : product.price,
+                    "quantity" : item["quantity"],
+                    "total" : product.price * item["quantity"],
+                })
+        
+        return Response({"cart_data" : cart_data, "option": items})
+    
+    def put(self, request):
+        user_id = request.user.id
+        cart_items = Cart.objects.filter(user=user_id)
+        data = request.data
+        data['user'] = user_id
+        data['product'] = CartSerializer(cart_items.get(id=data['id'])).data['product']
+        new_item = Cart.objects.get(id=data['id'])
+        print(data)
+        serializer = CartSerializer(new_item, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    def delete(self, request):
+        user_id = request.user.id
+        cart_items = Cart.objects.filter(user=user_id)
+        serializer = CartSerializer(cart_items, many=True)
+        cart_data = serializer.data
+        for item in cart_data:
+            if item['cancle'] == True:
+                print(item['id'])
+                Cart.objects.get(id=item['id']).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class CartCreatAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        request.data['user'] = request.user.id
+        serializer = CartSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import User, Post, Profile, Comment, Reply, Category
+from .models import User, Post, Profile, Comment, Reply, Category, Cart
 
 
 User = get_user_model()
@@ -24,6 +24,13 @@ class UserSerializer(serializers.ModelSerializer):
             'email',
             'profile',
         ]
+        
+    def create(self, validated_data):
+        user = User.objects.create_user(  # type: ignore
+            validated_data
+        )
+        
+        return user
 
 class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150, write_only=True)
@@ -32,12 +39,7 @@ class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True)
         
-    def create(self, validated_data):
-        user = User.objects.create_user(  # type: ignore
-            validated_data
-        )
-        
-        return user
+    
 class ReplySerializer(serializers.ModelSerializer):
     class Meta:
         model = Reply
@@ -58,4 +60,11 @@ class PostSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)
     class Meta:
         model = Post
+        fields = ["title", "context", "price", "category", "comments"]
+        
+class CartSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    product = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
+    class Meta:
+        model = Cart
         fields = '__all__'
