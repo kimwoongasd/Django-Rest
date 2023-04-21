@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from dj_rest_auth.registration.serializers import RegisterSerializer
 from django.contrib.auth import get_user_model
 from .models import User, Post, Profile, Comment, Reply, Category, Cart
 
@@ -32,14 +33,17 @@ class UserSerializer(serializers.ModelSerializer):
         
         return user
 
-class RegisterSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=150, write_only=True)
-    first_name = serializers.CharField(max_length=150, write_only=True)
-    last_name = serializers.CharField(max_length=150, write_only=True)
-    email = serializers.EmailField(write_only=True)
-    password = serializers.CharField(write_only=True)
-        
+class CustomRegisterSerializer(RegisterSerializer):
     
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    def get_cleaned_data(self):
+        data = super().get_cleaned_data()
+        data['first_name'] = self.validated_data.get('first_name', '') # type: ignore
+        data['last_name'] = self.validated_data.get('lsat_name', '') # type: ignore
+
+        return data
+        
 class ReplySerializer(serializers.ModelSerializer):
     class Meta:
         model = Reply

@@ -32,7 +32,6 @@ class UserManager(BaseUserManager):
         if not password:
             raise ValueError('패드워드는 필수 항목입니다.')
         
-        
         user = self.model(
             username=username,
             first_name=first_name,
