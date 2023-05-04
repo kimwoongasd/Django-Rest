@@ -1,3 +1,5 @@
+import os
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "blog.settings")
 from django.db import models, transaction
 from django.core import validators
 from django.utils.deconstruct import deconstructible
@@ -166,10 +168,3 @@ class Cart(models.Model):
     product = models.ForeignKey(Post, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
     cancle = models.BooleanField(default=False)
-
-
-# class Order(models.Model):
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     product = models.ForeignKey(Post, on_delete=models.CASCADE)
-#     quantity = models.IntegerField(default=1)
-#     order_date = models.DateTimeField(auto_now=True)
