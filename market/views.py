@@ -6,11 +6,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, APIView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from .serializers import *
 from blog.settings import SECRET_KEY
 from blog.password import *
 from .models import *
+from rest_framework.renderers import TemplateHTMLRenderer
 
 
 # jwt 토근 인증 확인용 뷰셋
@@ -154,7 +154,6 @@ class UpdateProfileApi(APIView):
     
 
 class CartManageAPI(APIView):
-    permission_classes = [IsAuthenticated]
     
     def get(self, request):
         user_id = request.user.id
@@ -172,8 +171,8 @@ class CartManageAPI(APIView):
                     "quantity" : item["quantity"],
                     "total" : product.price * item["quantity"],
                 })
-        
-        return Response({"cart_data" : cart_data, "option": items})
+        content = {"cart_data" : cart_data, "option": items}
+        return Response(content)
     
     def put(self, request):
         user_id = request.user.id

@@ -44,10 +44,7 @@ class GoogleSinginCallbackApi(APIView):
         
         # access token을 이용하여 유저 정보 가져오기
         user_info_response = requests.get(
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            params={
-            'access_token': access_token
-            }
+            f"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}"
             )
         
         # 에러 발생시 중단
@@ -56,7 +53,8 @@ class GoogleSinginCallbackApi(APIView):
         
     
         user_info = user_info_response.json()
-        # print(user_info)
+        print(user_info)
+        
         profile_data = {
             'username' : user_info['email'],
             'first_name' : user_info.get('family_name', ''),
@@ -74,4 +72,3 @@ class GoogleSinginCallbackApi(APIView):
         respone = jwt_login(user=user)
         print(respone)
         return respone
-            
