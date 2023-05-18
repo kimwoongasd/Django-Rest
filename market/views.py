@@ -25,14 +25,17 @@ class PostPagination(PageNumberPagination):
 
 class PostList(APIView):
     pagination_class = PostPagination
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'market/home.html'
     
     # post list 보여줄 때
     def get(self, request):
-        posts = Post.objects.all()
+        posts = Post.objects.order_by('-pk')
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(posts, request)
         serializer = PostSerializer(result_page, many=True)
-        return Response(serializer.data)
+        context = {"post_list" : serializer.data}
+        return Response(context)
     
     
 class PostCreateAPI(APIView):
@@ -154,6 +157,9 @@ class UpdateProfileApi(APIView):
     
 
 class CartManageAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'market/cart.html'
     
     def get(self, request):
         user_id = request.user.id

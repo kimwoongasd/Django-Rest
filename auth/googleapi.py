@@ -44,7 +44,10 @@ class GoogleSinginCallbackApi(APIView):
         
         # access token을 이용하여 유저 정보 가져오기
         user_info_response = requests.get(
-            f"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}"
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            params={
+            'access_token': access_token
+                }
             )
         
         # 에러 발생시 중단
