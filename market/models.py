@@ -97,7 +97,7 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
     nickname = models.CharField(max_length=20, null=True, blank=True)
     realname = models.CharField(max_length=128, null=True, blank=True)
-    prfile_pic = models.ImageField(null=True, blank=True)
+    prfile_pic = models.ImageField(null=True, blank=True, default='pngegg.png')
     provier = models.CharField(max_length=128, null=True, blank=True)
     
     def __str__(self):
@@ -136,7 +136,7 @@ class Post(models.Model):
     title = models.CharField(max_length=10)
     context = models.TextField(max_length=1000)
     price = models.IntegerField()
-    post_pic = models.ImageField(null=True, blank=True)
+    post_pic = models.ImageField(null=True, blank=True, )
     dt_created = models.DateField(auto_now_add=True)
     dt_update = models.DateField(auto_now=True)
     

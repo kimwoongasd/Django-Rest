@@ -10,15 +10,17 @@ router.register('list', UserViewSet) # 유저리스트 (테스트용)
 
 urlpatterns = [
     path("", include(router.urls)),
-    # path("register/", RegisterAPIView.as_view()), #회원가입하기
-    # path("auth/", Authview.as_view()), #로그인하기
+    path("register/", RegisterAPIView.as_view(), name='singup'), #회원가입하기
+    path("auth/", Authview.as_view(), name='market_login'), #로그인하기
+    path("info/", UserInfo.as_view(), name="info"), # 유저정보 확인
+    path("auth/logout/", Authview.as_view(), name='logout'),
     # path("auth/refresh/", TokenRefreshView.as_view()), #토큰 재발급하기
-    path("post/", PostList.as_view()), # 상품글 리스트
-    path("post/create/", PostCreateAPI.as_view()),
-    path("post/<int:pk>/", PostDetail.as_view()), # 글 상세보기
+    path("post/", PostList.as_view(), name='home'), # 상품글 리스트
+    path("post/create/", PostCreateAPI.as_view(), name='post_create'),
+    path("post/<int:pk>/", PostDetail.as_view(), name='post_detail'), # 글 상세보기
     path("post/<int:pk>/comments/<int:comment_pk>/", CommentManageApi.as_view(), name='comment-detail'), # 댓글 수정 및 삭제
     path("post/<int:pk>/comments/<int:comment_pk>/reply/<int:reply_pk>/", ReplyManageApi.as_view(), name='reply-detail'), # 대댓글 기능
-    path("auth/<int:user_id>/update/", UpdateProfileApi.as_view()), # 프로필 수정
+    path("auth/<int:user_id>/update/", UpdateProfileApi.as_view(), name='profile'), # 프로필 수정
     path("auth/cart/", CartManageAPI.as_view()),
     path("auth/cart/create/", CartCreatAPI.as_view()),
     

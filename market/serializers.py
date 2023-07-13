@@ -55,7 +55,7 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = '__all__'
 
-class  CategorySerializer(serializers.ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = '__all__'
@@ -64,6 +64,7 @@ class PostSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)
     class Meta:
         model = Post
+        ordering = ['-pk']
         fields = ["title", "context", "price", "category", "comments"]
         
 class CartSerializer(serializers.ModelSerializer):
