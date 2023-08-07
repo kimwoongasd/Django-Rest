@@ -198,7 +198,7 @@ class PostDetail(APIView):
 class CommentManageApi(APIView):
     def get_object(self, pk, comment_pk):
         try:
-            return Comment.objects.filter(post=pk).get(pk=comment_pk)
+            return Comment.objects.select_related('post').get(post=pk, pk=comment_pk)
         except Post.DoesNotExist:
             raise Http404
         
@@ -233,7 +233,7 @@ class CommentManageApi(APIView):
 class ReplyManageApi(APIView):
     def get_object(self, pk, comment_pk, reply_pk):
         try:
-            return Reply.objects.filter(comment__post=pk, comment_id=comment_pk).get(pk=reply_pk)
+            return Reply.objects.select_related('comment__post', 'comment').get(comment__post=pk, comment_id=comment_pk, pk=reply_pk)
         except Post.DoesNotExist:
             raise Http404
         
