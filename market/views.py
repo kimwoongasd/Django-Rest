@@ -23,7 +23,6 @@ class Authview(APIView):
             username = request.data.get("username"), email=request.data.get("email"), password=request.data.get("password")
         )
         # 이미 회원가입 된 유저일 때
-        print(user)
         if user is not None:
             serializer = UserSerializer(user)
             # jwt 토큰 접근
@@ -74,9 +73,7 @@ class UserInfo(APIView):
                 payload = jwt.decode(refresh, SECRET_KEY, algorithms=['HS256'])
             pk = payload.get('user_id')
             user = get_object_or_404(User, pk=pk)
-            # print(user)
             serializer = UserSerializer(instance=user)
-            # print(serializer)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except(jwt.exceptions.ExpiredSignatureError):
@@ -272,9 +269,6 @@ class UpdateProfileApi(APIView):
     
 
 class CartManageAPI(APIView):
-    renderer_classes = [TemplateHTMLRenderer]
-    template_name = 'market/cart.html'
-    
     def get(self, request):
         user_id = request.user.id
         cart_items = Cart.objects.filter(user=user_id)
